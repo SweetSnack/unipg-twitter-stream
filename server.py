@@ -1,7 +1,7 @@
 from sys import stdout
 from tweepy.streaming import StreamListener
-from tweepy import OAuthHandler
-from tweepy import Stream
+from tweepy import OAuthHandler, API
+from tweepy import Stream, api
 
 import json
 import os
@@ -17,8 +17,6 @@ consumer_secret = os.environ.get("consumer_secret")
 
 access_token = os.environ.get("access_token")
 access_token_secret = os.environ.get("access_token_secret")
-
-hashtags = ['#1DFoMMVA', ]
 
 class StdOutListener(StreamListener):
     """
@@ -43,10 +41,11 @@ class StdOutListener(StreamListener):
 
 
 if __name__ == '__main__':
-
     l = StdOutListener()
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
 
     stream = Stream(auth, l)
+    api = API(auth_handler=auth)
+    hashtags = [i['name'] for i in api.trends_place(id=1)[0]['trends']]
     stream.filter(track=hashtags)
