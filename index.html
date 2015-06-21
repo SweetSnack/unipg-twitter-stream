@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
+</head>
+<body>
+<pre id="log"></pre>
+<canvas id="myCanvas" width="600" height="600"></canvas>
+<script>
+    // helper function: log message to screen
+    function log(msg) {
+        document.getElementById('log').textContent += msg + '\n';
+    }
+
+    // setup websocket with callbacks
+    var ws = new WebSocket('ws://localhost:8080/');
+    ws.onopen = function() {
+        log('CONNECT');
+    };
+    ws.onclose = function() {
+        log('DISCONNECT');
+    };
+    ws.onmessage = function(event) {
+        log('MESSAGE: ' + event.data);
+    };
+
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+    var centerX = canvas.width / 2;
+    var centerY = canvas.height / 2;
+    var radius = 70;
+
+    var hashtags = ['#mariotti', '#silvano', '#porcodio', '#madonna'];
+    var hashcoords = [[radius, radius], [canvas.width-radius, radius], [canvas.width - radius, canvas.height - radius], [radius, canvas.height - radius]];
+    var hashcolors = ['red', 'green', 'blue', 'yellow'];
+
+    var palline = [];
+
+    function Pallina(x, y, color, text) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = 70;
+        this.text = text || '';
+    }
+
+    pallina = new Pallina(centerX, centerY, 'black');
+
+    drawCircle(pallina);
+
+    function drawCircle(pallina) {
+        context.beginPath();
+        context.arc(pallina.x, pallina.y, pallina.radius, 0, 2 * Math.PI, false);
+        context.fillStyle = pallina.color;
+        context.fill();
+        drawText(pallina.text, pallina.x - pallina.text.length/2 * 9, pallina.y + 4.5, 'black');
+        //context.lineWidth = 5;
+//        context.strokeStyle = '#003300';
+//        context.stroke();
+    }
+
+    for (var i=0; i<hashtags.length; i++) {
+        var hashtag = hashtags[i], coord = hashcoords[i], color = hashcolors[i];
+        palline.push(new Pallina(coord[0], coord[1], color, hashtag));
+    }
+
+    var j=0;
+    context.font="20px Georgia";
+
+    function drawText(text, x, y, color) {
+        context.fillStyle = color;
+        context.fillText(text, x, y);
+    }
+
+    function loop() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        palline.forEach(drawCircle);
+
+
+
+        window.requestAnimationFrame(loop);
+    }
+
+    window.requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>     
