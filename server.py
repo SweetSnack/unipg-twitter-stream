@@ -47,5 +47,5 @@ if __name__ == '__main__':
 
     stream = Stream(auth, l)
     api = API(auth_handler=auth)
-    hashtags = [i['name'] for i in api.trends_place(id=1)[0]['trends']]
+    hashtags = [i['name'] for i in api.trends_place(id=23424853)[0]['trends']]
     stream.filter(track=hashtags)
