@@ -3,84 +3,150 @@
 <head>
     <style>
         body {
-            margin: 0px;
-            padding: 0px;
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
 <body>
-<pre id="log"></pre>
 <canvas id="myCanvas" width="600" height="600"></canvas>
 <script>
-    // helper function: log message to screen
-    function log(msg) {
-        document.getElementById('log').textContent += msg + '\n';
-    }
-
-    // setup websocket with callbacks
+    //  setup websocket with callbacks
     var ws = new WebSocket('ws://localhost:8080/');
     ws.onopen = function() {
-        log('CONNECT');
+        console.log('CONNECTED');
     };
     ws.onclose = function() {
-        log('DISCONNECT');
+        console.log('DISCONNECTED');
     };
     ws.onmessage = function(event) {
-        log('MESSAGE: ' + event.data);
+        balls.push(spawnBall(event.data));
     };
 
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
     var centerX = canvas.width / 2;
     var centerY = canvas.height / 2;
-    var radius = 70;
 
-    var hashtags = ['#mariotti', '#silvano', '#porcodio', '#madonna'];
-    var hashcoords = [[radius, radius], [canvas.width-radius, radius], [canvas.width - radius, canvas.height - radius], [radius, canvas.height - radius]];
-    var hashcolors = ['red', 'green', 'blue', 'yellow'];
+    var populars = {};
 
-    var palline = [];
+    var colors= ['aqua', 'yellow', 'blue', 'fuchsia', 'green',
+        'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red',
+        'silver', 'teal', 'white', 'gray'];
 
-    function Pallina(x, y, color, text) {
+    var balls = [];
+
+
+
+    function getPopular(hashtag) {
+        var popular = populars[hashtag];
+
+        if (!popular) {
+            var num_hashtags = Object.keys(populars).length,
+                color = colors[num_hashtags % colors.length];
+
+            popular = populars[hashtag] = new Ball(color, 0, 0, hashtag);
+            changePopularDestination();
+        }
+
+        return popular;
+    }
+
+    function changePopularDestination() {
+        var keys = Object.keys(populars);
+        var num = keys.length;
+
+        for (var i=0; i<num; i++) {
+            var popular = populars[keys[i]];
+            popular.destination = {
+                x: centerX + Math.cos(i / num * Math.PI*2) * centerX/2,
+                y: centerY + Math.sin(i / num * Math.PI*2) * centerY/2
+            };
+        }
+
+    }
+
+    function spawnBall(destination) {
+        var popular = getPopular(destination);
+        return new Ball(popular.color, centerX, centerY, popular);
+    }
+
+    function moveBall(ball) {
+        // if ball has destination
+        if (ball.destination) {
+            var x = ball.destination.x - ball.x;
+            var y = ball.destination.y - ball.y;
+
+            var len = Math.sqrt(x*x + y*y);
+
+            // destination reached
+            if (len === 0) {
+                ball.destination.radius++;
+                ball.destination = null;
+                return false;
+            }
+
+            // last movement
+            if (len < ball.speed)  {
+                ball.x = ball.destination.x;
+                ball.y = ball.destination.y;
+                return true;
+            }
+
+            // normalize;
+            x /= len;
+            y /= len;
+
+            // multiply by speed
+            x *= ball.speed;
+            y *= ball.speed;
+
+            ball.x += x;
+            ball.y += y;
+        }
+
+        return true;
+    }
+
+    function Ball(color, x, y, destination) {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.radius = 70;
-        this.text = text || '';
+        this.speed = 5;
+        this.radius = 10;
+        this.text = destination || '';
+        this.destination = destination;
     }
 
-    pallina = new Pallina(centerX, centerY, 'black');
-
-    drawCircle(pallina);
-
-    function drawCircle(pallina) {
+    function drawBall(ball) {
         context.beginPath();
-        context.arc(pallina.x, pallina.y, pallina.radius, 0, 2 * Math.PI, false);
-        context.fillStyle = pallina.color;
+        context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI, false);
+        context.fillStyle = ball.color;
         context.fill();
-        drawText(pallina.text, pallina.x - pallina.text.length/2 * 9, pallina.y + 4.5, 'black');
-        //context.lineWidth = 5;
-//        context.strokeStyle = '#003300';
-//        context.stroke();
+        drawText(ball.text, ball.x - ball.text.length/2 * 9, ball.y + ball.radius + 23, 'black');
+        context.lineWidth = 3;
+        context.strokeStyle = '#003300';
+        context.stroke();
     }
 
-    for (var i=0; i<hashtags.length; i++) {
-        var hashtag = hashtags[i], coord = hashcoords[i], color = hashcolors[i];
-        palline.push(new Pallina(coord[0], coord[1], color, hashtag));
-    }
-
-    var j=0;
-    context.font="20px Georgia";
 
     function drawText(text, x, y, color) {
+        context.font="20px Georgia";
         context.fillStyle = color;
         context.fillText(text, x, y);
     }
 
     function loop() {
         context.clearRect(0, 0, canvas.width, canvas.height);
-        palline.forEach(drawCircle);
 
+        balls = balls.filter(moveBall);
+        balls.forEach(drawBall);
+
+        Object.keys(populars).forEach(function (key) {
+            var popular = populars[key];
+            moveBall(popular);
+            drawBall(popular);
+        });
 
 
         window.requestAnimationFrame(loop);
