@@ -1,51 +1,26 @@
-from sys import stdout
-from tweepy.streaming import StreamListener
-from tweepy import OAuthHandler, API
-from tweepy import Stream, api
+import threading
 
-import json
-import os
+import tornado.ioloop
+import tornado.web
 
-from os.path import join, dirname
-from dotenv import load_dotenv
+from twitter import TwitterListener
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+from server import WebHandler, MessageHandler
 
-consumer_key = os.environ.get("consumer_key")
-consumer_secret = os.environ.get("consumer_secret")
 
-access_token = os.environ.get("access_token")
-access_token_secret = os.environ.get("access_token_secret")
+# Tornado handlers list
+handlers = [
+    (r"/", WebHandler),
+    (r"/ws", MessageHandler),
+]
 
-class StdOutListener(StreamListener):
-    """
-    A listener handles tweets are the received from the stream.
-    This is a basic listener that just prints received tweets to stdout.
-    """
-
-    def on_data(self, data):
-        data = json.loads(data)
-        data_hashtags = data['entities']['hashtags']
-        for i in data_hashtags:
-            hashtag = '#{}'.format(i['text'])
-            if hashtag in hashtags:
-                print(hashtag)
-                # DON'T FORGET TO FLUSH!!!!
-                stdout.flush()
-                return True
-        return True
-
-    def on_error(self, status):
-        print(status)
-
+application = tornado.web.Application(handlers)
 
 if __name__ == '__main__':
-    l = StdOutListener()
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
+    # listening Twitter stream in a new thread
+    threading.Thread(target=TwitterListener).start()
 
-    stream = Stream(auth, l)
-    api = API(auth_handler=auth)
-    hashtags = [i['name'] for i in api.trends_place(id=44418)[0]['trends']]
-    stream.filter(track=hashtags)
+    # starting tornado
+    application.listen(8080)
+    print("Server is running on port :8080")
+    tornado.ioloop.IOLoop.current().start()

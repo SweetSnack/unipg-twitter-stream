@@ -12,7 +12,7 @@
 <canvas id="myCanvas" width="600" height="600"></canvas>
 <script>
     //  setup websocket with callbacks
-    var ws = new WebSocket('ws://localhost:8080/');
+    var ws = new WebSocket('ws://localhost:8080/ws');
     ws.onopen = function() {
         console.log('CONNECTED');
     };
