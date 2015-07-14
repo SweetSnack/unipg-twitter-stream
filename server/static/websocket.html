@@ -28,33 +28,30 @@
         this.y = y || 0;
     }
 
-    Vector2D.prototype.setTo = function(vector) {
-        this.x = vector.x;
-        this.y = vector.y;
-    };
-
-    Vector2D.prototype.add = function(vector) {
-        this.x += vector.x;
-        this.y += vector.y;
-    };
-
-    Vector2D.prototype.scale = function(scalar) {
-        this.x *= scalar;
-        this.y *= scalar;
-    };
-
-    Vector2D.prototype.minus = function(vector) {
-        return new Vector2D(this.x - vector.x, this.y - vector.y);
-    };
-
-    Vector2D.prototype.length = function() {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
-
-    Vector2D.prototype.normalize = function() {
-        var length = this.length();
-        this.x /= length;
-        this.y /= length;
+    Vector2D.prototype = {
+        setTo: function (vector) {
+            this.x = vector.x;
+            this.y = vector.y;
+        },
+        add: function (vector) {
+            this.x += vector.x;
+            this.y += vector.y;
+        },
+        scale: function (scalar) {
+            this.x *= scalar;
+            this.y *= scalar;
+        },
+        minus: function (vector) {
+            return new Vector2D(this.x - vector.x, this.y - vector.y);
+        },
+        length: function () {
+            return Math.sqrt(this.x * this.x + this.y * this.y);
+        },
+        normalize: function() {
+            var length = this.length();
+            this.x /= length;
+            this.y /= length;
+        }
     };
 
     var canvas = document.getElementById('myCanvas');
@@ -167,13 +164,6 @@
 
     Ball.prototype.constructor = Ball;
 
-
-    function drawText(text, x, y, color) {
-        context.font="20px Georgia";
-        context.fillStyle = color;
-        context.fillText(text, x, y);
-    }
-
     function loop() {
         context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -192,7 +182,7 @@
         populars.forEach(function(ball) { ball.draw(context); });
     }
 
-    window.requestAnimationFrame(loop);
+    loop();
 
 </script>
 </body>
