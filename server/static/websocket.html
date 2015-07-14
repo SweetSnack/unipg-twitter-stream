@@ -28,6 +28,11 @@
         this.y = y || 0;
     }
 
+    Vector2D.prototype.setTo = function(vector) {
+        this.x = vector.x;
+        this.y = vector.y;
+    };
+
     Vector2D.prototype.add = function(vector) {
         this.x += vector.x;
         this.y += vector.y;
@@ -38,9 +43,8 @@
         this.y *= scalar;
     };
 
-    Vector2D.prototype.subtract = function(vector) {
-        this.x -= vector.x;
-        this.y -= vector.y;
+    Vector2D.prototype.minus = function(vector) {
+        return new Vector2D(this.x - vector.x, this.y - vector.y);
     };
 
     Vector2D.prototype.length = function() {
@@ -91,10 +95,10 @@
             num = populars.length;
 
         populars.forEach(function (popular, index) {
-            popular.destination = {
-                x: centerX + Math.cos(index / num * Math.PI*2) * centerX/2,
-                y: centerY + Math.sin(index / num * Math.PI*2) * centerY/2
-            };
+            popular.destination = new Vector2D(
+                centerX + Math.cos(index / num * Math.PI*2) * centerX/2,
+                centerY + Math.sin(index / num * Math.PI*2) * centerY/2
+            );
         });
 
     }
@@ -104,46 +108,8 @@
         return new Ball(popular.color, centerX, centerY, popular);
     }
 
-    function moveBall(ball) {
-        // if ball has destination
-        if (ball.destination) {
-            var x = ball.destination.x - ball.x;
-            var y = ball.destination.y - ball.y;
-
-            var len = Math.sqrt(x*x + y*y);
-
-            // destination reached
-            if (len === 0) {
-                ball.destination.radius++;
-                ball.destination = null;
-                return false;
-            }
-
-            // last movement
-            if (len < ball.speed)  {
-                ball.x = ball.destination.x;
-                ball.y = ball.destination.y;
-                return true;
-            }
-
-            // normalize;
-            x /= len;
-            y /= len;
-
-            // multiply by speed
-            x *= ball.speed;
-            y *= ball.speed;
-
-            ball.x += x;
-            ball.y += y;
-        }
-
-        return true;
-    }
-
     function Ball(color, x, y, destination) {
-        this.x = x;
-        this.y = y;
+        Vector2D.call(this, x, y);
         this.color = color;
         this.speed = 5;
         this.radius = 10;
@@ -151,16 +117,55 @@
         this.destination = destination;
     }
 
-    function drawBall(ball) {
+    Ball.prototype = new Vector2D();
+
+    Ball.prototype.move = function () {
+
+        // if ball has no destination
+        if (!this.destination) {
+            // nothing to do here
+            return true;
+        }
+
+        var vect = this.destination.minus(this);
+        var distance = vect.length();
+
+        // destination reached
+        if (distance === 0) {
+            this.destination.radius++;
+            this.destination = null;
+            // say goodbye to this world!
+            return false;
+        }
+
+        // last movement
+        if (distance < this.speed) {
+            this.setTo(this.destination);
+            return true;
+        }
+
+        vect.normalize();
+        vect.scale(this.speed);
+
+        this.add(vect);
+
+        return true;
+    };
+
+    Ball.prototype.draw = function (context) {
         context.beginPath();
-        context.arc(ball.x, ball.y, ball.radius, 0, 2 * Math.PI, false);
-        context.fillStyle = ball.color;
+        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+        context.fillStyle = this.color;
         context.fill();
-        drawText(ball.text, ball.x - ball.text.length/2 * 9, ball.y + ball.radius + 23, 'black');
+        context.font="20px Georgia";
+        context.fillStyle = 'black';
+        context.fillText(this.text, this.x - this.text.length/2 * 9, this.y + this.radius + 23);
         context.lineWidth = 3;
         context.strokeStyle = '#003300';
         context.stroke();
-    }
+    };
+
+    Ball.prototype.constructor = Ball;
 
 
     function drawText(text, x, y, color) {
@@ -180,11 +185,11 @@
     function loopBody() {
         var populars = getPopulars();
 
-        balls = balls.filter(moveBall);
-        populars.forEach(moveBall);
+        balls = balls.filter(function(ball) { return ball.move(); });
+        populars.forEach(function(ball) { ball.move(); });
 
-        balls.forEach(drawBall);
-        populars.forEach(drawBall);
+        balls.forEach(function(ball) { ball.draw(context); });
+        populars.forEach(function(ball) { ball.draw(context); });
     }
 
     window.requestAnimationFrame(loop);
