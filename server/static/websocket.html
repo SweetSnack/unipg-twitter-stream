@@ -23,6 +23,36 @@
         balls.push(spawnBall(event.data));
     };
 
+    function Vector2D(x, y) {
+        this.x = x || 0;
+        this.y = y || 0;
+    }
+
+    Vector2D.prototype.add = function(vector) {
+        this.x += vector.x;
+        this.y += vector.y;
+    };
+
+    Vector2D.prototype.scale = function(scalar) {
+        this.x *= scalar;
+        this.y *= scalar;
+    };
+
+    Vector2D.prototype.subtract = function(vector) {
+        this.x -= vector.x;
+        this.y -= vector.y;
+    };
+
+    Vector2D.prototype.length = function() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
+
+    Vector2D.prototype.normalize = function() {
+        var length = this.length();
+        this.x /= length;
+        this.y /= length;
+    };
+
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
     var centerX = canvas.width / 2;
@@ -30,13 +60,11 @@
 
     var populars = {};
 
-    var colors= ['aqua', 'yellow', 'blue', 'fuchsia', 'green',
+    var colors = ['aqua', 'yellow', 'blue', 'fuchsia', 'green',
         'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red',
         'silver', 'teal', 'white', 'gray'];
 
     var balls = [];
-
-
 
     function getPopular(hashtag) {
         var popular = populars[hashtag];
@@ -46,23 +74,28 @@
                 color = colors[num_hashtags % colors.length];
 
             popular = populars[hashtag] = new Ball(color, 0, 0, hashtag);
-            changePopularDestination();
+            changePopularsDestination();
         }
 
         return popular;
     }
 
-    function changePopularDestination() {
-        var keys = Object.keys(populars);
-        var num = keys.length;
+    function getPopulars() {
+        return Object.keys(populars).map(function(key) {
+            return populars[key];
+        });
+    }
 
-        for (var i=0; i<num; i++) {
-            var popular = populars[keys[i]];
+    function changePopularsDestination() {
+        var populars = getPopulars(),
+            num = populars.length;
+
+        populars.forEach(function (popular, index) {
             popular.destination = {
-                x: centerX + Math.cos(i / num * Math.PI*2) * centerX/2,
-                y: centerY + Math.sin(i / num * Math.PI*2) * centerY/2
+                x: centerX + Math.cos(index / num * Math.PI*2) * centerX/2,
+                y: centerY + Math.sin(index / num * Math.PI*2) * centerY/2
             };
-        }
+        });
 
     }
 
@@ -139,17 +172,19 @@
     function loop() {
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        balls = balls.filter(moveBall);
-        balls.forEach(drawBall);
-
-        Object.keys(populars).forEach(function (key) {
-            var popular = populars[key];
-            moveBall(popular);
-            drawBall(popular);
-        });
-
+        loopBody();
 
         window.requestAnimationFrame(loop);
+    }
+
+    function loopBody() {
+        var populars = getPopulars();
+
+        balls = balls.filter(moveBall);
+        populars.forEach(moveBall);
+
+        balls.forEach(drawBall);
+        populars.forEach(drawBall);
     }
 
     window.requestAnimationFrame(loop);
