@@ -53,8 +53,8 @@ function changePopularsDestination() {
 
   populars.forEach(function (popular, index) {
     popular.destination = new Vector2D(
-      centerX() + Math.cos(index / num * Math.PI*2) * centerX()/2,
-      centerY() + Math.sin(index / num * Math.PI*2) * centerY()/2
+      centerX() + Math.cos(index / num * Math.PI*2) * centerX()/1.5,
+      centerY() + Math.sin(index / num * Math.PI*2) * centerY()/1.5
     );
   });
 
@@ -66,8 +66,6 @@ function spawnBall(destination) {
 }
 
 function loop() {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-
   loopBody();
 
   window.requestAnimationFrame(loop);
@@ -76,9 +74,12 @@ function loop() {
 function loopBody() {
   var populars = getPopulars();
 
+  // calculate balls' next position
   balls = balls.filter(function(ball) { return ball.move(); });
   populars.forEach(function(ball) { ball.move(); });
 
+  // draw them!
+  context.clearRect(0, 0, canvas.width, canvas.height);
   balls.forEach(function(ball) { ball.draw(context); });
   populars.forEach(function(ball) { ball.draw(context); });
 }

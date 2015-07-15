@@ -4,10 +4,6 @@ function Vector2D(x, y) {
 }
 
 Vector2D.prototype = {
-  setTo: function (vector) {
-    this.x = vector.x;
-    this.y = vector.y;
-  },
   add: function (vector) {
     this.x += vector.x;
     this.y += vector.y;

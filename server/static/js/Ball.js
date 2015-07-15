@@ -2,7 +2,7 @@ function Ball(color, x, y, destination) {
   Vector2D.call(this, x, y);
   this.color = color;
   this.speed = 5;
-  this.radius = 10;
+  this.weight = 1;
   this.text = destination || '';
   this.destination = destination;
 }
@@ -18,20 +18,12 @@ Ball.prototype.move = function () {
   }
 
   var vect = this.destination.minus(this);
-  var distance = vect.length();
-
-  // destination reached
-  if (distance === 0) {
-    this.destination.getFed && this.destination.getFed();
-    this.destination = null;
-    // say goodbye to this world!
-    return false;
-  }
 
   // last movement
-  if (distance < this.speed) {
-    this.setTo(this.destination);
-    return true;
+  if (vect.length() < this.speed) {
+    if (this.destination.touch) this.destination.touch();
+    this.destination = null;
+    return false;
   }
 
   vect.normalize();
@@ -44,19 +36,19 @@ Ball.prototype.move = function () {
 
 Ball.prototype.draw = function (context) {
   context.beginPath();
-  context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+  context.arc(this.x, this.y, this.weight/10 + 10, 0, 2 * Math.PI, false);
   context.fillStyle = this.color;
   context.fill();
   context.font="20px Georgia";
   context.fillStyle = 'black';
-  context.fillText(this.text, this.x - this.text.length/2 * 9, this.y + this.radius + 23);
+  context.fillText(this.text, this.x - this.text.length/2 * 9, this.y + this.weight/10 + 10 + 23);
   context.lineWidth = 3;
   context.strokeStyle = '#003300';
   context.stroke();
 };
 
-Ball.prototype.getFed = function () {
-  this.radius++;
+Ball.prototype.touch = function () {
+  this.weight++;
 };
 
 Ball.prototype.constructor = Ball;
