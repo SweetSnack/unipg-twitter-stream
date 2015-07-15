@@ -4,9 +4,13 @@ import tornado.ioloop
 import tornado.web
 
 from twitter import TwitterListener
+import config
 
 from server import WebHandler, MessageHandler
 
+settings = {
+  "static_path": config.STATIC_PATH
+}
 
 # Tornado handlers list
 handlers = [
@@ -14,7 +18,7 @@ handlers = [
     (r"/ws", MessageHandler),
 ]
 
-application = tornado.web.Application(handlers)
+application = tornado.web.Application(handlers, **settings)
 
 if __name__ == '__main__':
     # listening Twitter stream in a new thread
