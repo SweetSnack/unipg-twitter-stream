@@ -18,6 +18,9 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
     """
     connections = []
 
+    def check_origin(self, origin):
+        return True
+
     def open(self):
         self.connections.append(self)
 
